@@ -1,6 +1,6 @@
 # Project Plan -- YouTube Transcription Web App
 
-**Last updated:** 2026-03-21
+**Last updated:** 2026-03-21 (status updated after Phase 1 build)
 
 ## Overview
 
@@ -12,30 +12,35 @@ A web application that downloads YouTube video transcripts. Users paste one or m
 
 ### Phase 1 -- Core Web App (CURRENT)
 
-**Status:** Not started
+**Status:** Code complete -- tests not yet verified
 
 Build a working FastAPI backend and React frontend that handles single and batch transcript downloads.
 
 | Feature | Status |
 |---|---|
-| Backend: FastAPI project scaffold | Not started |
-| Backend: YouTube URL parser (all formats) | Not started |
-| Backend: Transcript fetch + format service | Not started |
-| Backend: `POST /api/transcript` endpoint | Not started |
-| Backend: ZIP packaging for batch downloads | Not started |
-| Backend: Per-video error handling in batch | Not started |
-| Backend: CORS middleware | Not started |
-| Backend: Environment-based config | Not started |
-| Backend: Unit + integration tests | Not started |
-| Frontend: Vite + React + TypeScript scaffold | Not started |
-| Frontend: URL textarea (multi-line input) | Not started |
-| Frontend: Custom filename field (single URL) | Not started |
-| Frontend: Language selector dropdown | Not started |
-| Frontend: Timestamps toggle (default ON) | Not started |
-| Frontend: Download trigger | Not started |
-| Frontend: Per-video error display | Not started |
-| Frontend: Loading state | Not started |
-| Frontend: Tests | Not started |
+| Backend: FastAPI project scaffold | Done |
+| Backend: YouTube URL parser (all formats) | Done |
+| Backend: Transcript fetch + format service | Done |
+| Backend: `POST /api/transcript` endpoint | Done |
+| Backend: ZIP packaging for batch downloads | Done |
+| Backend: Per-video error handling in batch | Done |
+| Backend: CORS middleware | Done |
+| Backend: Environment-based config | Done |
+| Backend: Unit + integration tests | Done (not yet run) |
+| Frontend: Vite + React + TypeScript scaffold | Done |
+| Frontend: URL textarea (multi-line input) | Done |
+| Frontend: Custom filename field (single URL) | Done |
+| Frontend: Language selector dropdown | Done |
+| Frontend: Timestamps toggle (default ON) | Done |
+| Frontend: Download trigger | Done |
+| Frontend: Per-video error display | Done |
+| Frontend: Loading state | Done |
+| Frontend: Tests | Done (not yet run) |
+
+**Pending before Phase 1 is fully verified:**
+- [ ] Run `pytest` in `backend/` and confirm all tests pass
+- [ ] Run `npm test` in `frontend/` and confirm all tests pass
+- [ ] Run code reviewer checklist from `AGENT_INSTRUCTIONS.md`
 
 ### Phase 2 -- Topic Search (FUTURE -- do not build yet)
 

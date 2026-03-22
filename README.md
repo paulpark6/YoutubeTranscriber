@@ -1,65 +1,111 @@
 # YouTube Transcription Tool
 
-A simple Python script that fetches the transcript of a YouTube video and saves it to a `.txt` file with timestamps.
+A web app that downloads YouTube transcripts as `.txt` files. Paste one or more YouTube URLs, choose a language, toggle timestamps, and download.
 
-Uses the community library [`youtube-transcript-api`](https://github.com/jdepoix/youtube-transcript-api) by [jdepoix](https://github.com/jdepoix).
+Built with **FastAPI** (backend) and **React + Vite** (frontend).
+
+---
+
+## Prerequisites
+
+- Python 3.10+
+- Node.js 18+
 
 ---
 
 ## Setup
 
-**1. Create and activate a virtual environment (recommended)**
+### Backend
 
 ```bash
+# From the project root
 python3 -m venv venv
 source venv/bin/activate        # macOS/Linux
 venv\Scripts\activate           # Windows
+
+pip install -r backend/requirements.txt
+
+cp backend/.env.example backend/.env
 ```
 
-**2. Install dependencies**
+### Frontend
 
 ```bash
-pip install -r requirements.txt
+cd frontend
+npm install
 ```
+
+---
+
+## Running the app
+
+You need two terminals running at the same time.
+
+**Terminal 1 — Backend**
+
+```bash
+source venv/bin/activate        # macOS/Linux
+venv\Scripts\activate           # Windows
+
+cd backend
+uvicorn app.main:app --reload --port 8000
+```
+
+**Terminal 2 — Frontend**
+
+```bash
+cd frontend
+npm run dev
+```
+
+Then open **http://localhost:5173** in your browser.
 
 ---
 
 ## Usage
 
-Run the script:
+1. Paste one or more YouTube URLs into the text area (one per line)
+2. Optionally enter a custom filename (only available for single-URL downloads)
+3. Choose a language (default: English)
+4. Toggle timestamps on or off (default: on)
+5. Click **Download Transcript**
+
+Single URL → downloads a `.txt` file
+Multiple URLs → downloads a `.zip` containing one `.txt` per video
+
+### Supported URL formats
+
+```
+https://www.youtube.com/watch?v=zijbzxinWng
+https://youtu.be/zijbzxinWng
+https://www.youtube.com/shorts/zijbzxinWng
+zijbzxinWng   (raw 11-character video ID)
+```
+
+---
+
+## Running tests
+
+**Backend**
 
 ```bash
-python transcribe.py
+source venv/bin/activate
+cd backend
+python -m pytest tests/ -v
 ```
 
-You will be prompted for two inputs:
+**Frontend**
 
-1. **YouTube video ID** — the part after `?v=` in a YouTube URL.
-2. **Output filename** — name of the `.txt` file to save the transcript to (no extension needed).
-
-### Example
-
-For the video `https://www.youtube.com/watch?v=zijbzxinWng`, the video ID is `zijbzxinWng`.
-
-```
-Enter the YouTube video ID: zijbzxinWng
-Enter the output filename (without extension): my_transcript
-Saved to my_transcript.txt
-```
-
-The output file will look like:
-
-```
-[00:00] Welcome to the video.
-[00:05] Today we're going to talk about...
-[01:23] Let's dive in.
-...
+```bash
+cd frontend
+npm run test
 ```
 
 ---
 
 ## Notes
 
-- The video must have captions/transcripts available (auto-generated or manual). If not, the script will print an error.
+- The video must have captions available (auto-generated or manual). If not, an error is shown.
 - No YouTube API key is required.
-- The transcript is saved in UTF-8 encoding.
+- All transcripts are UTF-8 encoded.
+- The original command-line script is still available at `transcribe.py`.
