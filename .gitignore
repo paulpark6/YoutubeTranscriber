@@ -9,9 +9,6 @@ __pycache__/
 
 # Transcript outputs (transcribe.py writes arbitrary .txt files in the repo root)
 *.txt
-!requirements.txt
-!claude_code.txt
-!sub_agent.txt
 
 # OS / editor
 .DS_Store
