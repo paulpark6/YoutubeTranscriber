@@ -8,7 +8,7 @@ export interface TranscriptRequest {
 export async function downloadTranscript(
   params: TranscriptRequest
 ): Promise<{ error?: string | string[] }> {
-  const baseUrl = import.meta.env.VITE_API_URL ?? '';
+  const baseUrl = '';
 
   let response: Response;
   try {

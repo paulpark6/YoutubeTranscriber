@@ -24,8 +24,6 @@ source venv/bin/activate        # macOS/Linux
 venv\Scripts\activate           # Windows
 
 pip install -r backend/requirements.txt
-
-cp backend/.env.example backend/.env
 ```
 
 ### Frontend
