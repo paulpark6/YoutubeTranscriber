@@ -16,12 +16,12 @@ from fastapi.responses import StreamingResponse
 
 from app.schemas.transcript import TranscriptRequest
 from app.services.transcript import (
-    build_zip,
     fetch_transcript,
-    format_transcript,
     sanitize_filename,
 )
+from app.services.transcript_format import format_transcript
 from app.services.url_parser import parse_video_id
+from app.services.zip_builder import build_zip
 
 logger = logging.getLogger(__name__)
 

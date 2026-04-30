@@ -1,11 +1,9 @@
 """
-Core transcript logic: fetch, format, sanitize filenames, and build ZIP archives.
+Core transcript logic: fetch and sanitize filenames.
 """
 
-import io
 import logging
 import re
-import zipfile
 from typing import Any
 
 from youtube_transcript_api import YouTubeTranscriptApi
@@ -16,13 +14,6 @@ from youtube_transcript_api._errors import (
 )
 
 logger = logging.getLogger(__name__)
-
-
-def _format_time(seconds: float) -> str:
-    """Convert a float number of seconds to MM:SS string."""
-    minutes = int(seconds // 60)
-    secs = int(seconds % 60)
-    return f"{minutes:02d}:{secs:02d}"
 
 
 def fetch_transcript(video_id: str, language: str = "en") -> list[dict[str, Any]]:
@@ -72,36 +63,6 @@ def fetch_transcript(video_id: str, language: str = "en") -> list[dict[str, Any]
         ) from exc
 
 
-def format_transcript(
-    segments: list[dict[str, Any]], include_timestamps: bool = True
-) -> str:
-    """
-    Format raw transcript segments into a human-readable string.
-
-    Args:
-        segments:           List of dicts with ``start`` and ``text`` keys.
-        include_timestamps: When True, each line is prefixed with ``[MM:SS]``.
-
-    Returns:
-        Formatted transcript text with one segment per line.
-    """
-    if not segments:
-        return ""
-
-    lines: list[str] = []
-    for segment in segments:
-        text = segment.get("text", "").strip()
-        if not text:
-            continue
-        if include_timestamps:
-            ts = _format_time(float(segment.get("start", 0)))
-            lines.append(f"[{ts}] {text}")
-        else:
-            lines.append(text)
-
-    return "\n".join(lines)
-
-
 def sanitize_filename(name: str) -> str:
     """
     Strip or replace characters that are unsafe for filenames across common OSes.
@@ -128,21 +89,3 @@ def sanitize_filename(name: str) -> str:
     if not sanitized:
         sanitized = "transcript"
     return sanitized
-
-
-def build_zip(files: dict[str, str]) -> bytes:
-    """
-    Build a ZIP archive in memory from a mapping of filename to text content.
-
-    Args:
-        files: Dict mapping filenames (including extension) to their text content.
-
-    Returns:
-        Raw ZIP file bytes ready to be sent as an HTTP response body.
-    """
-    buffer = io.BytesIO()
-    with zipfile.ZipFile(buffer, mode="w", compression=zipfile.ZIP_DEFLATED) as zf:
-        for filename, content in files.items():
-            zf.writestr(filename, content.encode("utf-8"))
-    buffer.seek(0)
-    return buffer.read()

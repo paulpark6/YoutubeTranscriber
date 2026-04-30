@@ -11,11 +11,11 @@ from unittest.mock import MagicMock, patch
 import pytest
 
 from app.services.transcript import (
-    build_zip,
     fetch_transcript,
-    format_transcript,
     sanitize_filename,
 )
+from app.services.transcript_format import format_transcript
+from app.services.zip_builder import build_zip
 
 
 # ---------------------------------------------------------------------------
