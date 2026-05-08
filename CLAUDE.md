@@ -2,6 +2,17 @@
 
 This file provides guidance to Claude Code (claude.ai/code) when working with code in this repository.
 
+## Always read PLAN.md first
+
+Before starting any task in this repo, **read `PLAN.md`**. It is the single source of truth for MVP scope, build order, and what is currently in progress. Every task in this repo either:
+
+- Advances a `[ ]` or `[~]` item in `PLAN.md` toward `[x]`, or
+- Is out of scope for MVP (push back on the user before doing it).
+
+When you complete work that satisfies a checkbox, **propose the checkbox flip in chat and wait for the user's explicit approval before editing PLAN.md**. See "PLAN.md update protocol" below.
+
+If you finish work that's not represented in `PLAN.md`, that's a smell. Either propose adding it as a new checkbox, or stop and confirm scope with the user.
+
 ## Commands
 
 All backend commands assume the venv is activated (`source venv/bin/activate` from repo root) and you are in the `backend/` directory. The backend imports use `app.*` paths, so `uvicorn` and `pytest` must be run from `backend/` (not the repo root) for imports to resolve.
@@ -56,6 +67,28 @@ The app has a single user-facing endpoint: **`POST /api/transcript`** (defined i
 - Pydantic request/response models → `backend/app/schemas/`.
 - New React components → `frontend/src/components/`. Frontend API client functions → `frontend/src/api/`.
 
+## Description files — keep in sync with code
+
+Each directory in the backend has a `*_description.md` file that documents the files, functions, and invariants in that directory. These are:
+
+- `backend/backend_description.md`
+- `backend/app/backend_app_description.md`
+- `backend/app/routers/backend_app_routers_description.md`
+- `backend/app/schemas/backend_app_schemas_description.md`
+- `backend/app/services/backend_app_services_description.md`
+- `backend/tests/backend_tests_description.md`
+
+**Any time you add, remove, rename, or meaningfully change a file, function, argument, return type, exception, or invariant in `backend/`, you must also update the description file for that directory.** This applies to agents too — `backend-agent` must update the relevant description file(s) as part of the same PR/commit as the code change.
+
+What to update:
+- Added a file → add a new `### filename.py` section.
+- Removed a file → delete its section.
+- Renamed a function or argument → update the function entry.
+- Changed behavior, exception handling, or a key limitation → update the relevant bullet under that function.
+- Added a new limitation or known edge case → add it under "Limitations".
+
+Do **not** update description files for: pure test-only changes that don't alter the public interface, comment/whitespace-only edits, or changes to planning docs.
+
 ## Reference files
 
 - `transcribe.py` (repo root) is the original CLI prototype. It is not used by the web app and not imported anywhere — kept for reference only.
@@ -108,5 +141,6 @@ When to trigger this protocol:
 - A new feature, phase, or section is added.
 - A decision changes (e.g. host choice, auth direction).
 - The actual code drifts from what `PLAN.md` says is built — flag it and propose a correction.
+- A user instruction implies new scope not on the checklist — pause, propose a new checkbox under the right Stage, get approval, then proceed.
 
 Do **not** trigger this protocol for: pure bug fixes, refactors with no behavior change, doc typos in other files. Those don't move the MVP checklist.
