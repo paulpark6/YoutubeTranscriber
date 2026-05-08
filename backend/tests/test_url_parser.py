@@ -11,6 +11,14 @@ import pytest
 
 from app.services.url_parser import parse_video_id
 
+# ---------------------------------------------------------------------------
+# Module-level constants — reused across many table rows.
+# Using a named constant makes it obvious that 9 rows share the same ID and
+# that changes to one propagate everywhere.
+# ---------------------------------------------------------------------------
+_RICK_ROLL_ID = "dQw4w9WgXcQ"
+_FAKE_PLAYLIST = "PLxyz"
+
 
 # ---------------------------------------------------------------------------
 # GLOBAL: real-world URLs that should resolve to a specific video ID.
@@ -18,38 +26,40 @@ from app.services.url_parser import parse_video_id
 # ---------------------------------------------------------------------------
 REAL_URLS: list[tuple[str, str]] = [
     # Standard watch URLs (desktop, copy-paste from address bar)
-    ("https://www.youtube.com/watch?v=dQw4w9WgXcQ", "dQw4w9WgXcQ"),
-    ("https://youtube.com/watch?v=dQw4w9WgXcQ", "dQw4w9WgXcQ"),
+    (f"https://www.youtube.com/watch?v={_RICK_ROLL_ID}", _RICK_ROLL_ID),
+    (f"https://youtube.com/watch?v={_RICK_ROLL_ID}", _RICK_ROLL_ID),
     # Watch URL with timestamp ("Copy URL at current time")
     ("https://www.youtube.com/watch?v=N5Zk-xH1e0k&t=596s", "N5Zk-xH1e0k"),
     # Watch URL with timestamp + playlist params (mixed)
-    ("https://www.youtube.com/watch?v=9bZkp7q19f0&list=PLxyz&t=12s", "9bZkp7q19f0"),
+    (f"https://www.youtube.com/watch?v=9bZkp7q19f0&list={_FAKE_PLAYLIST}&t=12s", "9bZkp7q19f0"),
+    # Watch URL with ?si= tracking param (desktop share link)
+    (f"https://www.youtube.com/watch?v={_RICK_ROLL_ID}&si=AbCdEfGhIjKlMnOp", _RICK_ROLL_ID),
     # youtu.be share link with ?si= (mobile "Share" button)
     ("https://youtu.be/8vIDZO_w7lY?si=_A4rcB8rw8vjODBI", "8vIDZO_w7lY"),
     # youtu.be with timestamp
-    ("https://youtu.be/dQw4w9WgXcQ?t=42", "dQw4w9WgXcQ"),
+    (f"https://youtu.be/{_RICK_ROLL_ID}?t=42", _RICK_ROLL_ID),
     # YouTube Shorts
     ("https://www.youtube.com/shorts/aQvpqlSiUIQ", "aQvpqlSiUIQ"),
     ("https://youtube.com/shorts/aQvpqlSiUIQ", "aQvpqlSiUIQ"),
     # YouTube Music
-    ("https://music.youtube.com/watch?v=dQw4w9WgXcQ", "dQw4w9WgXcQ"),
+    (f"https://music.youtube.com/watch?v={_RICK_ROLL_ID}", _RICK_ROLL_ID),
     # Mobile YouTube
-    ("https://m.youtube.com/watch?v=dQw4w9WgXcQ", "dQw4w9WgXcQ"),
+    (f"https://m.youtube.com/watch?v={_RICK_ROLL_ID}", _RICK_ROLL_ID),
     # Embed URLs
-    ("https://www.youtube.com/embed/dQw4w9WgXcQ", "dQw4w9WgXcQ"),
+    (f"https://www.youtube.com/embed/{_RICK_ROLL_ID}", _RICK_ROLL_ID),
     # Raw 11-char IDs (just pasted)
-    ("dQw4w9WgXcQ", "dQw4w9WgXcQ"),
+    (_RICK_ROLL_ID, _RICK_ROLL_ID),
     ("xS-fX-CL3Ys", "xS-fX-CL3Ys"),  # contains '-' (valid in IDs)
     ("abc-def_ghi", "abc-def_ghi"),  # contains '-' and '_' (both valid)
     # URL / ID with leading/trailing whitespace (paste accident)
-    ("  https://youtu.be/dQw4w9WgXcQ  ", "dQw4w9WgXcQ"),
-    ("  dQw4w9WgXcQ  ", "dQw4w9WgXcQ"),
+    (f"  https://youtu.be/{_RICK_ROLL_ID}  ", _RICK_ROLL_ID),
+    (f"  {_RICK_ROLL_ID}  ", _RICK_ROLL_ID),
     # Scheme-less variants — user copied without "https://"
-    ("youtu.be/dQw4w9WgXcQ", "dQw4w9WgXcQ"),
-    ("youtube.com/watch?v=dQw4w9WgXcQ", "dQw4w9WgXcQ"),
-    ("www.youtube.com/watch?v=dQw4w9WgXcQ", "dQw4w9WgXcQ"),
-    ("m.youtube.com/watch?v=dQw4w9WgXcQ", "dQw4w9WgXcQ"),
-    ("music.youtube.com/watch?v=dQw4w9WgXcQ", "dQw4w9WgXcQ"),
+    (f"youtu.be/{_RICK_ROLL_ID}", _RICK_ROLL_ID),
+    (f"youtube.com/watch?v={_RICK_ROLL_ID}", _RICK_ROLL_ID),
+    (f"www.youtube.com/watch?v={_RICK_ROLL_ID}", _RICK_ROLL_ID),
+    (f"m.youtube.com/watch?v={_RICK_ROLL_ID}", _RICK_ROLL_ID),
+    (f"music.youtube.com/watch?v={_RICK_ROLL_ID}", _RICK_ROLL_ID),
     ("www.youtube.com/shorts/aQvpqlSiUIQ", "aQvpqlSiUIQ"),
 ]
 
@@ -57,39 +67,49 @@ REAL_URLS: list[tuple[str, str]] = [
 # ---------------------------------------------------------------------------
 # GLOBAL: inputs that should raise ValueError.
 # Each row is (raw_user_input, expected_error_substring).
-# An empty substring means "any ValueError message is acceptable".
 # Substring match is case-insensitive.
+# Every row provides a non-empty substring so there is a real message contract;
+# "not a recognised" / "unrecognised" covers generic fallthrough cases.
 # ---------------------------------------------------------------------------
 INVALID_URLS: list[tuple[str, str]] = [
     # Empty / whitespace
     ("", "must not be empty"),
     ("   ", "must not be empty"),
+    # Tab-only and newline-only inputs are whitespace — same branch
+    ("\t", "must not be empty"),
+    ("\n", "must not be empty"),
     # Wrong-length raw IDs
-    ("dQw4w9WgXc", "Not a recognised YouTube URL"),     # 10 chars
-    ("dQw4w9WgXcQQ", "Not a recognised YouTube URL"),   # 12 chars
+    ("dQw4w9WgXc", "not a recognised YouTube URL"),     # 10 chars
+    ("dQw4w9WgXcQQ", "not a recognised YouTube URL"),   # 12 chars
     # Watch URL: missing or invalid `v` param
-    ("https://www.youtube.com/watch?list=PLxyz", "Missing or invalid 'v' query parameter"),
+    (f"https://www.youtube.com/watch?list={_FAKE_PLAYLIST}", "Missing or invalid 'v' query parameter"),
     ("https://www.youtube.com/watch?v=tooshort", "Missing or invalid 'v' query parameter"),
-    # youtu.be: invalid path
+    # youtu.be: invalid path (too short)
     ("https://youtu.be/bad", "youtu.be URL"),
-    # Shorts: invalid path
+    # youtu.be: empty path (no video at all)
+    ("https://youtu.be/", "youtu.be URL"),
+    # Shorts: invalid path (too long / illegal chars)
     ("https://www.youtube.com/shorts/toolong_id_here!", "Shorts URL"),
+    # Embed: invalid path (too short) — embed branch must raise a clear error
+    ("https://www.youtube.com/embed/tooshort", "embed"),
     # Non-YouTube domain
-    ("https://vimeo.com/123456789", "Not a recognised YouTube URL"),
+    ("https://vimeo.com/123456789", "not a recognised YouTube URL"),
     # Random text (not a URL, not 11 chars)
-    ("not_a_url_at_all_and_not_11", ""),
+    ("not_a_url_at_all_and_not_11", "not a recognised YouTube URL"),
     # YouTube channel URL (not a video)
-    ("https://www.youtube.com/channel/UCxxxxxx", ""),
+    ("https://www.youtube.com/channel/UCxxxxxx", "unrecognised YouTube URL path"),
     # Just the YouTube domain — no video selected
-    ("https://www.youtube.com/", ""),
+    ("https://www.youtube.com/", "unrecognised YouTube URL path"),
     # Channel handle URL — no video
-    ("https://www.youtube.com/@MrBeast", ""),
+    ("https://www.youtube.com/@MrBeast", "unrecognised YouTube URL path"),
     # Search results URL — no video
-    ("https://www.youtube.com/results?search_query=cats", ""),
+    ("https://www.youtube.com/results?search_query=cats", "unrecognised YouTube URL path"),
     # Playlist URL (playlist support is a separate feature ticket)
-    ("https://www.youtube.com/playlist?list=PLxyz", ""),
-    # Garbage with an 11-char substring buried inside — must NOT be scraped out
-    ("xxxxxxhello world dQw4w9WgXcQ blahxx", ""),
+    (f"https://www.youtube.com/playlist?list={_FAKE_PLAYLIST}", "unrecognised YouTube URL path"),
+    # Garbage with an 11-char substring buried inside.
+    # The raw-ID gate (_is_valid_video_id) only runs on the stripped input; an
+    # ID embedded in a longer string is NOT extracted — the input is not 11 chars.
+    (f"xxxxxxhello world {_RICK_ROLL_ID} blahxx", "not a recognised YouTube URL"),
 ]
 
 
@@ -107,8 +127,7 @@ def test_real_url_extracts_expected_id(raw_input: str, expected_id: str) -> None
 def test_invalid_url_raises_value_error(
     raw_input: str, expected_error_substring: str
 ) -> None:
-    """Each input in INVALID_URLS raises ValueError; if a substring is given, it appears in the message."""
+    """Each input in INVALID_URLS raises ValueError with a specific message substring."""
     with pytest.raises(ValueError) as exc_info:
         parse_video_id(raw_input)
-    if expected_error_substring:
-        assert expected_error_substring.lower() in str(exc_info.value).lower()
+    assert expected_error_substring.lower() in str(exc_info.value).lower()
