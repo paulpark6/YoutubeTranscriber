@@ -59,5 +59,54 @@ The app has a single user-facing endpoint: **`POST /api/transcript`** (defined i
 ## Reference files
 
 - `transcribe.py` (repo root) is the original CLI prototype. It is not used by the web app and not imported anywhere — kept for reference only.
-- The loose `*.txt` files at the repo root (e.g., `2JEzjfs6Kew.txt`) are sample transcript outputs from manual runs; they are not test fixtures.
-- `mdfiles/` contains the original planning docs (`PROJECT_PLAN.md`, `PROJECT_STRUCTURE.md`, `AGENT_INSTRUCTIONS.md`). `PROJECT_STRUCTURE.md` lists `.env.example` files and `pydantic-settings`/`python-dotenv` dependencies that the actual code does not use — trust the code over those docs when they conflict.
+- `PLAN.md` (repo root) is the MVP checklist — what is done, in progress, and left before shipping. See "PLAN.md update protocol" below.
+
+## Agents
+
+This repo has four subagents defined in `.claude/agents/`. Each owns a specific area; respect the boundaries.
+
+| Agent | Owns (may edit) | Off-limits | Use when |
+|---|---|---|---|
+| `backend-agent` | `backend/**` | `frontend/**`, `mdfiles/**` (does not exist anymore — historical) | Any FastAPI / Python / server-side work |
+| `frontend-engineer` | `frontend/**` | `backend/**`, planning docs | Any React / TS / UI work |
+| `code-reviewer` | (read-only) | Never edits | Final review pass before a feature is "done" — bugs, security, FE/BE contract mismatches |
+| `project-planner` | `PLAN.md`, `README.md` | `backend/**`, `frontend/**` | Updating the MVP checklist or coordinating multi-agent work. Never writes application code |
+
+### Picking the right agent
+
+- Touches files the user sees in the browser → `frontend-engineer`
+- Touches files that run on the server → `backend-agent`
+- Touches `PLAN.md` or planning docs → `project-planner`
+- Final check before merging a feature → `code-reviewer`
+- A change spans frontend and backend → start with `project-planner` to align scope, then run frontend and backend agents in parallel, then `code-reviewer`
+
+### Cross-agent handoff
+
+When a frontend feature depends on backend behavior (or vice versa), the agents do **not** talk directly — the main session coordinates:
+
+1. The first agent finishes its half and reports the contract it expects (endpoint shape, payload, headers, etc.).
+2. The main session passes that contract to the second agent in the prompt.
+3. After both halves are in, run `code-reviewer` with a prompt like *"verify that `frontend/src/api/transcript.ts` matches the request/response shape of `backend/app/routers/transcript.py`"*.
+
+If an agent needs to verify integration end-to-end (e.g. "does the download button actually trigger a real download"), do that from the main session with both servers running — agents should not start servers or run integration loops on their own.
+
+### Agent memory
+
+Each agent has a memory store at `.claude/agent-memory/<agent-name>/`. Memory is for **non-derivable** facts (user preferences, past incidents, surprising decisions). It is **not** a status tracker — do not use it to record what was built, what changed, or current project state. That belongs in `PLAN.md`, in the code itself, or in `git log`.
+
+## PLAN.md update protocol
+
+`PLAN.md` is the MVP checklist. Whenever a change to scope, structure, or a checklist item is warranted, follow this protocol — never edit `PLAN.md` silently:
+
+1. **Propose in chat first.** State the exact diff you want to apply (which checkbox flips, which line is added/removed/reworded) and the reason.
+2. **Wait for explicit user confirmation.** Do not infer approval from silence or from approval of an unrelated action. The user must say yes to the `PLAN.md` change specifically.
+3. **Apply the edit only after confirmation**, then show the user the resulting section.
+4. **If the user is not satisfied**, revise and re-propose. Do not move on until the user agrees the plan reflects reality.
+
+When to trigger this protocol:
+- A checklist item moves between `[ ]` / `[~]` / `[x]`.
+- A new feature, phase, or section is added.
+- A decision changes (e.g. host choice, auth direction).
+- The actual code drifts from what `PLAN.md` says is built — flag it and propose a correction.
+
+Do **not** trigger this protocol for: pure bug fixes, refactors with no behavior change, doc typos in other files. Those don't move the MVP checklist.

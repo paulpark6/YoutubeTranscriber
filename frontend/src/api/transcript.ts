@@ -1,4 +1,4 @@
-export interface TranscriptRequest {
+export interface TranscriptSchema {
   urls: string[];
   include_timestamps: boolean;
   language: string;
@@ -6,7 +6,7 @@ export interface TranscriptRequest {
 }
 
 export async function downloadTranscript(
-  params: TranscriptRequest
+  params: TranscriptSchema
 ): Promise<{ error?: string | string[] }> {
   const baseUrl = '';
 

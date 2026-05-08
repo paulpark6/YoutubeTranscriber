@@ -14,7 +14,7 @@ import logging
 from fastapi import APIRouter, HTTPException
 from fastapi.responses import StreamingResponse
 
-from app.schemas.transcript import TranscriptRequest
+from app.schemas.transcript_schema import TranscriptSchema
 from app.services.transcript import (
     fetch_transcript,
     sanitize_filename,
@@ -29,7 +29,7 @@ router = APIRouter(prefix="/api", tags=["transcript"])
 
 
 @router.post("/transcript")
-async def post_transcript(request: TranscriptRequest) -> StreamingResponse:
+async def post_transcript(request: TranscriptSchema) -> StreamingResponse:
     """
     Fetch and return YouTube transcripts as a downloadable file.
 

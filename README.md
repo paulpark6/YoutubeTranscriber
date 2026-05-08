@@ -63,7 +63,7 @@ Then open **http://localhost:5173** in your browser.
 ## Usage
 
 1. Paste one or more YouTube URLs into the text area (one per line)
-2. Optionally enter a custom filename (only available for single-URL downloads)
+2. Optionally enter a custom filename for each export, if you want.
 3. Choose a language (default: English)
 4. Toggle timestamps on or off (default: on)
 5. Click **Download Transcript**
@@ -77,8 +77,11 @@ Multiple URLs → downloads a `.zip` containing one `.txt` per video
 https://www.youtube.com/watch?v=zijbzxinWng
 https://youtu.be/zijbzxinWng
 https://www.youtube.com/shorts/zijbzxinWng
+https://www.youtube.com/embed/zijbzxinWng
 zijbzxinWng   (raw 11-character video ID)
 ```
+
+The `youtube.com` host also accepts the `m.youtube.com` (mobile) and `music.youtube.com` variants for any of the path-based formats above.
 
 ---
 

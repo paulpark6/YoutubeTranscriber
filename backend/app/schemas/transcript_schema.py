@@ -1,7 +1,7 @@
 from pydantic import BaseModel, Field
 
 
-class TranscriptRequest(BaseModel):
+class TranscriptSchema(BaseModel):
     """Request body for the POST /api/transcript endpoint."""
 
     urls: list[str] = Field(
