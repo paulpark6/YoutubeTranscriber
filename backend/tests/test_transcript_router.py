@@ -8,10 +8,12 @@ import io
 import zipfile
 from unittest.mock import MagicMock, patch
 
-import pytest
 from fastapi.testclient import TestClient
-from youtube_transcript_api._errors import NoTranscriptFound, TranscriptsDisabled, VideoUnavailable
-
+from youtube_transcript_api._errors import (
+    NoTranscriptFound,
+    TranscriptsDisabled,
+    VideoUnavailable,
+)
 
 # Patch target: the YouTubeTranscriptApi as used inside the service module.
 _API_TARGET = "app.services.transcript.YouTubeTranscriptApi"
@@ -41,11 +43,15 @@ def _fake_segments() -> list[MagicMock]:
     ]
 
 
-def _setup_mock(mock_api_cls: MagicMock, segments: list[MagicMock] | None = None) -> MagicMock:
+def _setup_mock(
+    mock_api_cls: MagicMock, segments: list[MagicMock] | None = None
+) -> MagicMock:
     """Wire mock so api.list().find_transcript().fetch() returns segments."""
     mock_instance = mock_api_cls.return_value
     mock_transcript = MagicMock()
-    mock_transcript.fetch.return_value = segments if segments is not None else _fake_segments()
+    mock_transcript.fetch.return_value = (
+        segments if segments is not None else _fake_segments()
+    )
     mock_instance.list.return_value.find_transcript.return_value = mock_transcript
     return mock_instance
 
@@ -54,6 +60,7 @@ def _setup_mock(mock_api_cls: MagicMock, segments: list[MagicMock] | None = None
 # Helpers
 # ---------------------------------------------------------------------------
 
+
 def _post(client: TestClient, payload: dict) -> "Response":  # noqa: F821
     return client.post("/api/transcript", json=payload)
 
@@ -61,6 +68,7 @@ def _post(client: TestClient, payload: dict) -> "Response":  # noqa: F821
 # ---------------------------------------------------------------------------
 # Single URL — success
 # ---------------------------------------------------------------------------
+
 
 class TestSingleUrl:
     @patch(_API_TARGET)
@@ -74,7 +82,9 @@ class TestSingleUrl:
         assert ".txt" in resp.headers["content-disposition"]
 
     @patch(_API_TARGET)
-    def test_txt_content_includes_timestamps_by_default(self, mock_api_cls, client: TestClient):
+    def test_txt_content_includes_timestamps_by_default(
+        self, mock_api_cls, client: TestClient
+    ):
         _setup_mock(mock_api_cls)
 
         resp = _post(client, {"urls": [_URL_1]})
@@ -130,10 +140,14 @@ class TestSingleUrl:
 
         assert resp.status_code == 200
         # Verify find_transcript was called with the requested language
-        mock_api_cls.return_value.list.return_value.find_transcript.assert_called_once_with(["es"])
+        mock_api_cls.return_value.list.return_value.find_transcript.assert_called_once_with(
+            ["es"]
+        )
 
     @patch(_API_TARGET)
-    def test_filename_with_path_traversal_is_sanitized(self, mock_api_cls, client: TestClient):
+    def test_filename_with_path_traversal_is_sanitized(
+        self, mock_api_cls, client: TestClient
+    ):
         """
         A filename containing path separators must have them removed so no path
         traversal is possible via Content-Disposition. Slashes are the critical
@@ -162,6 +176,7 @@ class TestSingleUrl:
 # Multiple URLs — success
 # ---------------------------------------------------------------------------
 
+
 class TestMultipleUrls:
     @patch(_API_TARGET)
     def test_returns_zip_file(self, mock_api_cls, client: TestClient):
@@ -186,7 +201,9 @@ class TestMultipleUrls:
         assert len(txt_files) == 2
 
     @patch(_API_TARGET)
-    def test_custom_filename_ignored_for_multiple_urls(self, mock_api_cls, client: TestClient):
+    def test_custom_filename_ignored_for_multiple_urls(
+        self, mock_api_cls, client: TestClient
+    ):
         _setup_mock(mock_api_cls)
 
         resp = _post(
@@ -204,7 +221,7 @@ class TestMultipleUrls:
 
     @patch(_API_TARGET)
     def test_duplicate_video_id_gets_suffixed(self, mock_api_cls, client: TestClient):
-        """Two identical URLs produce <id>.txt and <id>_1.txt — not a single overwritten file."""
+        """Two identical URLs produce <id>.txt and <id>_1.txt — not overwritten."""
         _setup_mock(mock_api_cls)
 
         resp = _post(client, {"urls": [_URL_1, _URL_1]})
@@ -216,7 +233,9 @@ class TestMultipleUrls:
         assert f"{_VIDEO_ID_1}_1.txt" in names
 
     @patch(_API_TARGET)
-    def test_mixed_empty_and_valid_urls_returns_two_file_zip(self, mock_api_cls, client: TestClient):
+    def test_mixed_empty_and_valid_urls_returns_two_file_zip(
+        self, mock_api_cls, client: TestClient
+    ):
         """Empty URL entries are stripped; the ZIP has one file per non-empty URL."""
         _setup_mock(mock_api_cls)
 
@@ -233,9 +252,12 @@ class TestMultipleUrls:
 # Partial failure
 # ---------------------------------------------------------------------------
 
+
 class TestPartialFailure:
     @patch(_API_TARGET)
-    def test_zip_includes_errors_txt_on_partial_failure(self, mock_api_cls, client: TestClient):
+    def test_zip_includes_errors_txt_on_partial_failure(
+        self, mock_api_cls, client: TestClient
+    ):
         call_count = 0
 
         def find_transcript_side_effect(langs):
@@ -247,7 +269,9 @@ class TestPartialFailure:
                 return mock_t
             raise NoTranscriptFound("vid2", ["en"], MagicMock())
 
-        mock_api_cls.return_value.list.return_value.find_transcript.side_effect = find_transcript_side_effect
+        mock_api_cls.return_value.list.return_value.find_transcript.side_effect = (
+            find_transcript_side_effect
+        )
 
         resp = _post(client, {"urls": [_URL_1, _URL_2]})
 
@@ -270,7 +294,9 @@ class TestPartialFailure:
                 return mock_t
             raise TranscriptsDisabled(_VIDEO_ID_2)
 
-        mock_api_cls.return_value.list.return_value.find_transcript.side_effect = find_transcript_side_effect
+        mock_api_cls.return_value.list.return_value.find_transcript.side_effect = (
+            find_transcript_side_effect
+        )
 
         resp = _post(client, {"urls": [_URL_1, _URL_2]})
 
@@ -294,7 +320,9 @@ class TestPartialFailure:
                 return mock_t
             raise VideoUnavailable(_VIDEO_ID_2)
 
-        mock_api_cls.return_value.list.return_value.find_transcript.side_effect = find_transcript_side_effect
+        mock_api_cls.return_value.list.return_value.find_transcript.side_effect = (
+            find_transcript_side_effect
+        )
 
         resp = _post(client, {"urls": [_URL_1, _URL_2]})
 
@@ -308,10 +336,14 @@ class TestPartialFailure:
 # All failures
 # ---------------------------------------------------------------------------
 
+
 class TestAllFailure:
     @patch(_API_TARGET)
     def test_returns_400_when_all_urls_fail(self, mock_api_cls, client: TestClient):
-        mock_api_cls.return_value.list.return_value.find_transcript.return_value.fetch.side_effect = VideoUnavailable("vid")
+        mock_fetch = (
+            mock_api_cls.return_value.list.return_value.find_transcript.return_value.fetch
+        )
+        mock_fetch.side_effect = VideoUnavailable("vid")
 
         resp = _post(client, {"urls": [_URL_1, _URL_2]})
 
@@ -319,7 +351,10 @@ class TestAllFailure:
 
     @patch(_API_TARGET)
     def test_400_body_contains_detail(self, mock_api_cls, client: TestClient):
-        mock_api_cls.return_value.list.return_value.find_transcript.return_value.fetch.side_effect = VideoUnavailable("vid")
+        mock_fetch = (
+            mock_api_cls.return_value.list.return_value.find_transcript.return_value.fetch
+        )
+        mock_fetch.side_effect = VideoUnavailable("vid")
 
         resp = _post(client, {"urls": [_URL_1]})
 
@@ -329,8 +364,7 @@ class TestAllFailure:
 
     def test_returns_400_for_all_invalid_urls(self, client: TestClient):
         resp = _post(
-            client,
-            {"urls": ["not-a-url-at-all-longerthan11", "also-not-valid-long"]}
+            client, {"urls": ["not-a-url-at-all-longerthan11", "also-not-valid-long"]}
         )
         assert resp.status_code == 400
 
@@ -347,6 +381,7 @@ class TestAllFailure:
 # Input validation
 # ---------------------------------------------------------------------------
 
+
 class TestInputValidation:
     def test_missing_urls_field_returns_422(self, client: TestClient):
         resp = _post(client, {"include_timestamps": True})
@@ -357,7 +392,7 @@ class TestInputValidation:
         assert resp.status_code == 422
 
     def test_malformed_json_returns_422(self, client: TestClient):
-        """A request body that is not valid JSON must yield a 422 Unprocessable Entity."""
+        """Non-JSON request body must yield a 422 Unprocessable Entity."""
         resp = client.post(
             "/api/transcript",
             content=b"this is not json",
@@ -369,6 +404,7 @@ class TestInputValidation:
 # ---------------------------------------------------------------------------
 # CORS configuration
 # ---------------------------------------------------------------------------
+
 
 class TestCors:
     @patch(_API_TARGET)

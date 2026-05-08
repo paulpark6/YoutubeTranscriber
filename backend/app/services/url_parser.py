@@ -9,7 +9,7 @@ Supported formats:
 """
 
 import re
-from urllib.parse import urlparse, parse_qs
+from urllib.parse import parse_qs, urlparse
 
 # YouTube video IDs are always exactly 11 characters: letters, digits, - and _
 _VIDEO_ID_RE = re.compile(r"^[A-Za-z0-9_-]{11}$")

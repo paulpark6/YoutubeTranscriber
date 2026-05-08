@@ -24,6 +24,7 @@ URL_2 = f"https://youtu.be/{VIDEO_ID_2}"
 # Segment factory
 # ---------------------------------------------------------------------------
 
+
 def make_segment(start: float, text: str) -> MagicMock:
     """Create a mock transcript segment matching the youtube-transcript-api shape."""
     seg = MagicMock()
@@ -44,7 +45,10 @@ def fake_segments() -> list[MagicMock]:
 # Mock-wiring helper
 # ---------------------------------------------------------------------------
 
-def setup_mock(mock_api_cls: MagicMock, segments: list[MagicMock] | None = None) -> MagicMock:
+
+def setup_mock(
+    mock_api_cls: MagicMock, segments: list[MagicMock] | None = None
+) -> MagicMock:
     """
     Wire *mock_api_cls* so that:
 
@@ -54,7 +58,9 @@ def setup_mock(mock_api_cls: MagicMock, segments: list[MagicMock] | None = None)
     """
     mock_instance = mock_api_cls.return_value
     mock_transcript = MagicMock()
-    mock_transcript.fetch.return_value = segments if segments is not None else fake_segments()
+    mock_transcript.fetch.return_value = (
+        segments if segments is not None else fake_segments()
+    )
     mock_instance.list.return_value.find_transcript.return_value = mock_transcript
     return mock_instance
 
@@ -62,6 +68,7 @@ def setup_mock(mock_api_cls: MagicMock, segments: list[MagicMock] | None = None)
 # ---------------------------------------------------------------------------
 # TestClient fixture
 # ---------------------------------------------------------------------------
+
 
 @pytest.fixture(scope="function")
 def client() -> TestClient:

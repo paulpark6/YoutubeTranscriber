@@ -38,7 +38,9 @@ def fetch_transcript(video_id: str, language: str = "en") -> list[dict[str, Any]
         transcript = api.list(video_id).find_transcript([language]).fetch()
         # The API returns FetchedTranscript objects; convert to plain dicts so
         # callers have no dependency on the library's internal types.
-        return [{"start": segment.start, "text": segment.text} for segment in transcript]
+        return [
+            {"start": segment.start, "text": segment.text} for segment in transcript
+        ]
 
     except NoTranscriptFound:
         raise ValueError(
@@ -56,10 +58,12 @@ def fetch_transcript(video_id: str, language: str = "en") -> list[dict[str, Any]
             "It may be private, deleted, or region-locked."
         )
     except Exception as exc:
-        logger.exception("Unexpected error fetching transcript for video '%s'", video_id)
+        logger.exception(
+            "Unexpected error fetching transcript for video '%s'", video_id
+        )
         raise RuntimeError(
-            f"An unexpected error occurred while fetching the transcript for '{video_id}'. "
-            "Please try again later."
+            f"An unexpected error occurred while fetching the transcript"
+            f" for '{video_id}'. Please try again later."
         ) from exc
 
 

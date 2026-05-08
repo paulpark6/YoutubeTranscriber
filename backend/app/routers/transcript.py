@@ -39,7 +39,7 @@ async def post_transcript(request: TranscriptSchema) -> StreamingResponse:
     - All URLs fail: HTTP 400 with a JSON error body.
     """
     successful: dict[str, str] = {}  # filename (with ext) -> formatted text
-    errors: list[str] = []           # human-readable error lines
+    errors: list[str] = []  # human-readable error lines
 
     for raw_url in request.urls:
         raw_url = raw_url.strip()
@@ -63,7 +63,9 @@ async def post_transcript(request: TranscriptSchema) -> StreamingResponse:
             continue
 
         # --- Format ---
-        text = format_transcript(segments, include_timestamps=request.include_timestamps)
+        text = format_transcript(
+            segments, include_timestamps=request.include_timestamps
+        )
 
         # --- Determine filename ---
         if len(request.urls) == 1 and request.filename:

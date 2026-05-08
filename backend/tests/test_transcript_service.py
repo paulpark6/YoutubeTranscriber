@@ -37,6 +37,7 @@ _FAKE_VIDEO_ID = "vid"
 # Helpers
 # ---------------------------------------------------------------------------
 
+
 def _make_segment(start: float, text: str) -> MagicMock:
     """Create a mock transcript segment object matching the library's API."""
     seg = MagicMock()
@@ -49,9 +50,14 @@ def _make_segment(start: float, text: str) -> MagicMock:
 # fetch_transcript
 # ---------------------------------------------------------------------------
 
-def _setup_fetch_mock(mock_api_cls: MagicMock, segments: list | None = None, side_effect=None) -> MagicMock:
-    """Wire mock so api.list().find_transcript().fetch() returns segments or raises side_effect."""
-    mock_transcript = mock_api_cls.return_value.list.return_value.find_transcript.return_value
+
+def _setup_fetch_mock(
+    mock_api_cls: MagicMock, segments: list | None = None, side_effect=None
+) -> MagicMock:
+    """Wire mock so fetch() returns segments or raises side_effect."""
+    mock_transcript = (
+        mock_api_cls.return_value.list.return_value.find_transcript.return_value
+    )
     if side_effect is not None:
         mock_transcript.fetch.side_effect = side_effect
     else:
@@ -62,10 +68,13 @@ def _setup_fetch_mock(mock_api_cls: MagicMock, segments: list | None = None, sid
 class TestFetchTranscript:
     @patch("app.services.transcript.YouTubeTranscriptApi")
     def test_returns_list_of_dicts(self, mock_api_cls):
-        _setup_fetch_mock(mock_api_cls, segments=[
-            _make_segment(0.0, "Hello"),
-            _make_segment(3.5, "World"),
-        ])
+        _setup_fetch_mock(
+            mock_api_cls,
+            segments=[
+                _make_segment(0.0, "Hello"),
+                _make_segment(3.5, "World"),
+            ],
+        )
 
         result = fetch_transcript("dQw4w9WgXcQ", language="en")
 
@@ -74,7 +83,9 @@ class TestFetchTranscript:
             {"start": 3.5, "text": "World"},
         ]
         mock_api_cls.return_value.list.assert_called_once_with("dQw4w9WgXcQ")
-        mock_api_cls.return_value.list.return_value.find_transcript.assert_called_once_with(["en"])
+        mock_api_cls.return_value.list.return_value.find_transcript.assert_called_once_with(
+            ["en"]
+        )
 
     @patch("app.services.transcript.YouTubeTranscriptApi")
     def test_default_language_is_en(self, mock_api_cls):
@@ -83,7 +94,9 @@ class TestFetchTranscript:
 
         fetch_transcript(_FAKE_VIDEO_ID)
 
-        mock_api_cls.return_value.list.return_value.find_transcript.assert_called_once_with(["en"])
+        mock_api_cls.return_value.list.return_value.find_transcript.assert_called_once_with(
+            ["en"]
+        )
 
     @patch("app.services.transcript.YouTubeTranscriptApi")
     def test_returns_empty_list_for_empty_segments(self, mock_api_cls):
@@ -96,7 +109,10 @@ class TestFetchTranscript:
 
     @patch("app.services.transcript.YouTubeTranscriptApi")
     def test_raises_value_error_on_no_transcript_found(self, mock_api_cls):
-        _setup_fetch_mock(mock_api_cls, side_effect=NoTranscriptFound(_FAKE_VIDEO_ID, ["en"], MagicMock()))
+        _setup_fetch_mock(
+            mock_api_cls,
+            side_effect=NoTranscriptFound(_FAKE_VIDEO_ID, ["en"], MagicMock()),
+        )
 
         with pytest.raises(ValueError, match="No transcript found"):
             fetch_transcript(_FAKE_VIDEO_ID, language="en")
@@ -126,6 +142,7 @@ class TestFetchTranscript:
 # ---------------------------------------------------------------------------
 # format_transcript
 # ---------------------------------------------------------------------------
+
 
 class TestFormatTranscript:
     def test_with_timestamps(self):
@@ -179,6 +196,7 @@ class TestFormatTranscript:
 # ---------------------------------------------------------------------------
 # sanitize_filename
 # ---------------------------------------------------------------------------
+
 
 class TestSanitizeFilename:
     def test_plain_name_unchanged_structure(self):
@@ -246,6 +264,7 @@ class TestSanitizeFilename:
 # ---------------------------------------------------------------------------
 # build_zip
 # ---------------------------------------------------------------------------
+
 
 class TestBuildZip:
     def test_returns_bytes(self):

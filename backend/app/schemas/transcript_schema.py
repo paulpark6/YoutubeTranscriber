@@ -15,7 +15,9 @@ class TranscriptSchema(BaseModel):
     )
     language: str = Field(
         default="en",
-        description="BCP-47 language code for the requested transcript (e.g. 'en', 'es').",
+        description=(
+            "BCP-47 language code for the requested transcript (e.g. 'en', 'es')."
+        ),
     )
     filename: str | None = Field(
         default=None,

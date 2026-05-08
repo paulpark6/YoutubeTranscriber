@@ -31,9 +31,15 @@ REAL_URLS: list[tuple[str, str]] = [
     # Watch URL with timestamp ("Copy URL at current time")
     ("https://www.youtube.com/watch?v=N5Zk-xH1e0k&t=596s", "N5Zk-xH1e0k"),
     # Watch URL with timestamp + playlist params (mixed)
-    (f"https://www.youtube.com/watch?v=9bZkp7q19f0&list={_FAKE_PLAYLIST}&t=12s", "9bZkp7q19f0"),
+    (
+        f"https://www.youtube.com/watch?v=9bZkp7q19f0&list={_FAKE_PLAYLIST}&t=12s",
+        "9bZkp7q19f0",
+    ),
     # Watch URL with ?si= tracking param (desktop share link)
-    (f"https://www.youtube.com/watch?v={_RICK_ROLL_ID}&si=AbCdEfGhIjKlMnOp", _RICK_ROLL_ID),
+    (
+        f"https://www.youtube.com/watch?v={_RICK_ROLL_ID}&si=AbCdEfGhIjKlMnOp",
+        _RICK_ROLL_ID,
+    ),
     # youtu.be share link with ?si= (mobile "Share" button)
     ("https://youtu.be/8vIDZO_w7lY?si=_A4rcB8rw8vjODBI", "8vIDZO_w7lY"),
     # youtu.be with timestamp
@@ -79,11 +85,17 @@ INVALID_URLS: list[tuple[str, str]] = [
     ("\t", "must not be empty"),
     ("\n", "must not be empty"),
     # Wrong-length raw IDs
-    ("dQw4w9WgXc", "not a recognised YouTube URL"),     # 10 chars
-    ("dQw4w9WgXcQQ", "not a recognised YouTube URL"),   # 12 chars
+    ("dQw4w9WgXc", "not a recognised YouTube URL"),  # 10 chars
+    ("dQw4w9WgXcQQ", "not a recognised YouTube URL"),  # 12 chars
     # Watch URL: missing or invalid `v` param
-    (f"https://www.youtube.com/watch?list={_FAKE_PLAYLIST}", "Missing or invalid 'v' query parameter"),
-    ("https://www.youtube.com/watch?v=tooshort", "Missing or invalid 'v' query parameter"),
+    (
+        f"https://www.youtube.com/watch?list={_FAKE_PLAYLIST}",
+        "Missing or invalid 'v' query parameter",
+    ),
+    (
+        "https://www.youtube.com/watch?v=tooshort",
+        "Missing or invalid 'v' query parameter",
+    ),
     # youtu.be: invalid path (too short)
     ("https://youtu.be/bad", "youtu.be URL"),
     # youtu.be: empty path (no video at all)
@@ -103,9 +115,15 @@ INVALID_URLS: list[tuple[str, str]] = [
     # Channel handle URL — no video
     ("https://www.youtube.com/@MrBeast", "unrecognised YouTube URL path"),
     # Search results URL — no video
-    ("https://www.youtube.com/results?search_query=cats", "unrecognised YouTube URL path"),
+    (
+        "https://www.youtube.com/results?search_query=cats",
+        "unrecognised YouTube URL path",
+    ),
     # Playlist URL (playlist support is a separate feature ticket)
-    (f"https://www.youtube.com/playlist?list={_FAKE_PLAYLIST}", "unrecognised YouTube URL path"),
+    (
+        f"https://www.youtube.com/playlist?list={_FAKE_PLAYLIST}",
+        "unrecognised YouTube URL path",
+    ),
     # Garbage with an 11-char substring buried inside.
     # The raw-ID gate (_is_valid_video_id) only runs on the stripped input; an
     # ID embedded in a longer string is NOT extracted — the input is not 11 chars.
@@ -117,6 +135,7 @@ INVALID_URLS: list[tuple[str, str]] = [
 # Parametrized tests over the global tables.
 # ---------------------------------------------------------------------------
 
+
 @pytest.mark.parametrize("raw_input, expected_id", REAL_URLS)
 def test_real_url_extracts_expected_id(raw_input: str, expected_id: str) -> None:
     """Each real-world URL in REAL_URLS resolves to its expected video ID."""
@@ -127,7 +146,7 @@ def test_real_url_extracts_expected_id(raw_input: str, expected_id: str) -> None
 def test_invalid_url_raises_value_error(
     raw_input: str, expected_error_substring: str
 ) -> None:
-    """Each input in INVALID_URLS raises ValueError with a specific message substring."""
+    """Each invalid input raises ValueError with a matching message substring."""
     with pytest.raises(ValueError) as exc_info:
         parse_video_id(raw_input)
     assert expected_error_substring.lower() in str(exc_info.value).lower()
