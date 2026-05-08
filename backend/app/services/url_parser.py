@@ -37,6 +37,13 @@ def parse_video_id(url: str) -> str:
     if not url:
         raise ValueError("URL must not be empty.")
 
+    # Tolerate scheme-less inputs like "youtu.be/ID" or "youtube.com/watch?v=ID"
+    # by prepending https:// so urlparse populates hostname correctly.
+    # Only do this when the input clearly looks URL-like (contains "/" or ".")
+    # AND is not already a raw 11-char video ID.
+    if "://" not in url and ("/" in url or "." in url) and not _is_valid_video_id(url):
+        url = "https://" + url
+
     # Raw 11-character video ID (no slashes or dots — not a URL)
     if _is_valid_video_id(url):
         return url
